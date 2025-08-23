@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Data Manager</title>
+    <title>Firebase Inventory Manager</title>
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for a modern look -->
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -25,7 +28,7 @@
 
         <div id="statusMessage" class="hidden p-4 rounded-xl text-center font-medium"></div>
 
-        <div id="top-buttons" class="flex justify-center space-x-4">
+        <div id="top-buttons" class="flex flex-wrap justify-center space-x-4 space-y-2 md:space-y-0">
             <button id="edit-all-btn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-xl hover:bg-indigo-700 transition-all">Edit All</button>
             <button id="save-all-btn" class="hidden bg-green-600 text-white font-semibold py-2 px-6 rounded-xl hover:bg-green-700 transition-all">Save All</button>
             <button id="cancel-all-btn" class="hidden bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-xl hover:bg-gray-400 transition-all">Cancel</button>
@@ -42,15 +45,44 @@
                         <th class="px-4 py-2 font-bold text-gray-600 text-center rounded-tl-xl">Peptide Name</th>
                         <th class="px-4 py-2 font-bold text-gray-600 text-center">COA</th>
                         <th class="px-4 py-2 font-bold text-gray-600 text-center">Image</th>
-                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Inventory</th>
-                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Price</th>
-                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Total vial weight</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Current Inventory</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Sell Price per Vial</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Total Vial Weight (mg)</th>
                         <th class="px-4 py-2 font-bold text-gray-600 text-center">Blend</th>
                         <th class="px-4 py-2 font-bold text-gray-600 text-center rounded-tr-xl">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    </tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- New Profit Table -->
+        <div class="table-container mt-8">
+            <h2 class="text-2xl font-bold text-center text-indigo-700 mb-4">Profit Projections</h2>
+            <table class="w-full text-left border-collapse" id="profitTable">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center rounded-tl-xl">Peptide Name</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Total Kits Bought</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Total Purchase Cost</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Average Cost per Vial</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center">Total Projected Revenue</th>
+                        <th class="px-4 py-2 font-bold text-gray-600 text-center rounded-tr-xl">Projected Profit</th>
+                    </tr>
+                </thead>
+                <tbody id="profitTableBody">
+                </tbody>
+                <!-- Table Footer for Totals -->
+                <tfoot id="profitTableFooter" class="bg-gray-200">
+                    <tr class="font-bold text-gray-800">
+                        <td class="px-4 py-3 text-right" colspan="2">TOTALS:</td>
+                        <td class="px-4 py-3 text-center" id="totalCostDisplay"></td>
+                        <td class="px-4 py-3 text-center"></td>
+                        <td class="px-4 py-3 text-center" id="totalRevenueDisplay"></td>
+                        <td class="px-4 py-3 text-center rounded-br-xl" id="totalProfitDisplay"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -66,21 +98,32 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
             <input type="url" id="new-image" placeholder="Image URL"
                     class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <input type="number" id="new-inventory" placeholder="Inventory"
+            <input type="number" id="new-current-inventory" placeholder="Current Inventory"
                     class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <input type="text" id="new-price" placeholder="Price"
+            <input type="number" id="new-sell-price" placeholder="Sell Price per Vial"
                     class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <input type="text" id="new-vial-weight" placeholder="Total vial weight"
+            <input type="number" id="new-total-vial-weight" placeholder="Total Vial Weight (mg)"
                     class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <input type="checkbox" id="new-blend"
-                    class="w-fit p-4 h-8 mt-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <label for="new-blend" class="text-sm font-medium text-gray-700 mt-2">Blend</label>
+            <input type="date" id="new-purchase-date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <input type="number" id="new-kit-cost" placeholder="Cost per Kit"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <input type="number" id="new-vials-per-kit" placeholder="Total Vials per Kit"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <input type="number" id="new-kits-bought" placeholder="Total Kits Bought"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="new-blend"
+                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="new-blend" class="text-sm font-medium text-gray-700">Blend</label>
+            </div>
         </div>
         <div class="flex justify-center">
             <button id="submit-btn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-xl hover:bg-indigo-700 transition-all">Submit</button>
         </div>
     </div>
 
+    <!-- Confirmation Modal for Deletion -->
     <div id="confirmModal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 flex items-center justify-center">
         <div class="bg-white p-8 rounded-xl shadow-xl w-96 text-center space-y-4">
             <h3 class="text-xl font-bold text-gray-800">Confirm Deletion</h3>
@@ -92,6 +135,7 @@
         </div>
     </div>
 
+    <!-- Price Calculator Modal -->
     <div id="calc-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-40 flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg space-y-6 my-auto">
             <h3 class="text-2xl font-bold text-center text-indigo-700">Price Calculator</h3>
@@ -134,50 +178,76 @@
 
     <script>
         /**
-         * This script demonstrates an interactive data management interface with real-time updates from Firebase.
-         * The inventory is displayed in a responsive card-based layout, allowing users to add, edit, and delete items.
-         * The app has been updated to match the new Firebase data structure, including 'Name' and 'Blend' fields.
-         * A new feature, a price calculator, is included in a separate modal window.
+         * This script demonstrates a real-time inventory management application using Firebase Realtime Database.
+         *
+         * This updated version now reads a new, single, nested data structure:
+         *
+         * /Peptides/
+         * [peptide_short_name]/
+         * blend: boolean
+         * coa: string
+         * image: string
+         * currentInventory: number
+         * name: string
+         * sellPricePerVial: number
+         * totalVialWeight: number
+         * costHistory: [
+         * { purchaseDate: string, costPerKit: number, totalKitsBought: number, totalVialsPerKit: number, totalVialWeightInMg: number },
+         * ...
+         * ]
+         *
+         * Key Features:
+         * - Reads all data from a single Firebase database path.
+         * - Accurately calculates all totals (cost, revenue, profit) by iterating through the `costHistory` for each item.
+         * - Real-time updates: The tables automatically update as data changes in the database.
+         * - Single and Bulk Editing: Users can edit individual items or switch to a bulk-edit mode to update all items at once.
+         * - Deletion with confirmation: A modal window ensures users confirm item deletion.
+         * - Price Calculator: A dedicated modal helps users calculate costs and suggested retail prices.
          */
         (function() {
-            // Firebase configuration object
+            // Firebase configuration object. The URL should point to your Firebase project.
             const firebaseConfig = {
                 databaseURL: "https://midway-inventory-2f88b-default-rtdb.firebaseio.com"
             };
 
-            // Initialize Firebase
+            // Initialize Firebase.
             const app = firebase.initializeApp(firebaseConfig);
             const database = firebase.database();
 
-            // Get references to HTML elements
+            // Get references to HTML elements.
             const statusMessage = document.getElementById('statusMessage');
             const tableBody = document.getElementById('tableBody');
+            const profitTableBody = document.getElementById('profitTableBody');
             const loadingMessage = document.getElementById('loading');
             const noDataMessage = document.getElementById('noData');
 
-            // Get references for new item inputs and button
+            // Get references for new item inputs and button.
             const newShortNameInput = document.getElementById('new-short-name');
             const newFullNameInput = document.getElementById('new-full-name');
             const newCoaInput = document.getElementById('new-coa');
             const newImageInput = document.getElementById('new-image');
-            const newInventoryInput = document.getElementById('new-inventory');
-            const newPriceInput = document.getElementById('new-price');
-            const newVialWeightInput = document.getElementById('new-vial-weight');
+            const newCurrentInventoryInput = document.getElementById('new-current-inventory');
+            const newSellPriceInput = document.getElementById('new-sell-price');
+            const newTotalVialWeightInput = document.getElementById('new-total-vial-weight');
             const newBlendInput = document.getElementById('new-blend');
+            const newPurchaseDateInput = document.getElementById('new-purchase-date');
+            const newKitCostInput = document.getElementById('new-kit-cost');
+            const newVialsPerKitInput = document.getElementById('new-vials-per-kit');
+            const newKitsBoughtInput = document.getElementById('new-kits-bought');
             const submitBtn = document.getElementById('submit-btn');
 
-            // Bulk-edit and calculator buttons
+            // Bulk-edit and calculator buttons.
             const editAllBtn = document.getElementById('edit-all-btn');
             const saveAllBtn = document.getElementById('save-all-btn');
             const cancelAllBtn = document.getElementById('cancel-all-btn');
             const newItemSection = document.getElementById('new-item-section');
             const openCalcBtn = document.getElementById('open-calc-btn');
 
-            // Modals
+            // Modals.
             const confirmModal = document.getElementById('confirmModal');
             const modalCancelBtn = document.getElementById('modal-cancel-btn');
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            let itemToDeleteRef = null;
+            let itemToDeleteKey = null;
 
             const calcModal = document.getElementById('calc-modal');
             const calcKitCostInput = document.getElementById('calc-kit-cost');
@@ -190,12 +260,17 @@
             const output4x = document.getElementById('output-4x');
             const calcCloseBtn = document.getElementById('calc-close-btn');
 
-            // State variables to track the current mode
+            // New footer elements for totals
+            const totalCostDisplay = document.getElementById('totalCostDisplay');
+            const totalRevenueDisplay = document.getElementById('totalRevenueDisplay');
+            const totalProfitDisplay = document.getElementById('totalProfitDisplay');
+
+            // State variables to track the current mode.
             let isEditingAll = false;
             let editingPeptideKey = null;
-            let currentData = {};
+            let currentPeptideData = {};
 
-            // Function to display a status message
+            // Function to display a status message.
             function showStatus(message, isSuccess) {
                 statusMessage.textContent = message;
                 statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
@@ -209,104 +284,121 @@
                 }, 5000);
             }
 
-            // Event listener to handle submitting a new item
+            // Event listener to handle submitting a new item.
             submitBtn.addEventListener('click', async () => {
                 const shortName = newShortNameInput.value.trim();
                 const fullName = newFullNameInput.value.trim();
-                const coa = newCoaInput.value.trim();
-                const image = newImageInput.value.trim();
-                const vialWeight = newVialWeightInput.value.trim();
-
-                // If a number field is empty or invalid, set its value to 0.
-                const inventory = parseInt(newInventoryInput.value, 10) || 0;
-                const price = parseFloat(newPriceInput.value.replace('$', '')) || 0;
-                const blend = newBlendInput.checked;
-
-                // The short name is a required key, so it cannot be empty.
+                
+                // The short name and full name are required keys.
                 if (!shortName || !fullName) {
                     showStatus('Peptide Short Name and Full Name are required to add a new item.', false);
                     return;
                 }
 
-                // Check if the peptide short name already exists
+                // Check if the peptide short name already exists.
                 const existingItem = await database.ref('Peptides/' + shortName).once('value');
                 if (existingItem.exists()) {
                     showStatus(`A peptide with the short name "${shortName}" already exists.`, false);
                     return;
                 }
 
-                const data = { Name: fullName, COA: coa, Image: image, Inventory: inventory, Price: price, "Total vial weight": vialWeight, Blend: blend };
-                await saveItem(shortName, data);
+                // Create a new cost history entry
+                const newCostEntry = {
+                    purchaseDate: newPurchaseDateInput.value || new Date().toISOString().slice(0, 10),
+                    costPerKit: parseFloat(newKitCostInput.value) || 0,
+                    totalKitsBought: parseInt(newKitsBoughtInput.value, 10) || 0,
+                    totalVialsPerKit: parseInt(newVialsPerKitInput.value, 10) || 0,
+                    totalVialWeightInMg: parseFloat(newTotalVialWeightInput.value) || 0
+                };
 
-                // Clear the input fields after adding
+                const newPeptideData = {
+                    name: fullName,
+                    coa: newCoaInput.value.trim(),
+                    image: newImageInput.value.trim(),
+                    currentInventory: parseInt(newCurrentInventoryInput.value, 10) || 0,
+                    sellPricePerVial: parseFloat(newSellPriceInput.value) || 0,
+                    totalVialWeight: parseFloat(newTotalVialWeightInput.value) || 0,
+                    blend: newBlendInput.checked,
+                    costHistory: [newCostEntry]
+                };
+
+                await saveItem(shortName, newPeptideData);
+
+                // Clear the input fields after adding.
                 newShortNameInput.value = '';
                 newFullNameInput.value = '';
                 newCoaInput.value = '';
                 newImageInput.value = '';
-                newInventoryInput.value = '';
-                newPriceInput.value = '';
-                newVialWeightInput.value = '';
+                newCurrentInventoryInput.value = '';
+                newSellPriceInput.value = '';
+                newTotalVialWeightInput.value = '';
                 newBlendInput.checked = false;
+                newPurchaseDateInput.value = '';
+                newKitCostInput.value = '';
+                newVialsPerKitInput.value = '';
+                newKitsBoughtInput.value = '';
             });
 
-            // Function to save or update a single item
-            async function saveItem(shortName, data) {
-                const dbRef = database.ref('Peptides/' + shortName);
+            // Function to save or update a single item.
+            async function saveItem(shortName, peptideData) {
                 try {
-                    await dbRef.set(data);
+                    await database.ref('Peptides/' + shortName).set(peptideData);
                     showStatus('Item saved successfully!', true);
                     editingPeptideKey = null; // Exit single edit mode
-                    displayData(currentData);
                 } catch (error) {
                     console.error("Error saving data: ", error);
                     showStatus('Error: ' + error.message, false);
                 }
             }
 
-            // Function to save all items from the bulk-edit mode
+            // Function to save all items from the bulk-edit mode.
             async function saveAllItems() {
-                const updatedItems = {};
+                const updatedData = {};
                 const rows = tableBody.querySelectorAll('tr');
 
                 rows.forEach(row => {
                     const shortName = row.dataset.peptideKey;
                     const inputs = row.querySelectorAll('input.edit-input');
-                    const updatedData = {};
+                    const originalItem = currentPeptideData[shortName];
+                    const updatedItem = { ...originalItem };
+
                     inputs.forEach(input => {
                         const key = input.dataset.key;
                         let value = input.value.trim();
                         let isChecked = input.checked;
 
+                        // Update the corresponding key based on type
                         if (input.type === 'checkbox') {
-                            updatedData[key] = isChecked;
+                            updatedItem[key] = isChecked;
+                        } else if (input.type === 'number') {
+                            updatedItem[key] = parseFloat(value) || 0;
                         } else {
-                            if (key === 'Inventory') {
-                                value = parseInt(value, 10) || 0;
-                            } else if (key === 'Price') {
-                                value = parseFloat(value.replace('$', '')) || 0;
-                            }
-                            updatedData[key] = value;
+                            updatedItem[key] = value;
+                        }
+
+                        // Special case for price key inconsistency
+                        if (key === 'sellPricePerVial') {
+                            updatedItem.price = updatedItem[key];
                         }
                     });
-                    updatedItems[shortName] = updatedData;
+                    
+                    updatedData[shortName] = updatedItem;
                 });
 
                 try {
-                    await database.ref('Peptides').set(updatedItems);
+                    await database.ref('Peptides').set(updatedData);
                     showStatus('All items saved successfully!', true);
                     isEditingAll = false; // Exit bulk edit mode
-                    displayData(currentData);
                 } catch(error) {
                     console.error("Error saving all items: ", error);
                     showStatus('Error saving all items: ' + error.message, false);
                 }
             }
 
-            // Function to delete an item
+            // Function to delete an item.
             async function deleteItem(shortName) {
-                const dbRef = database.ref('Peptides/' + shortName);
                 try {
-                    await dbRef.remove();
+                    await database.ref('Peptides/' + shortName).remove();
                     showStatus('Item deleted successfully!', true);
                 } catch (error) {
                     console.error("Error deleting data: ", error);
@@ -314,29 +406,29 @@
                 }
             }
 
-            // Function to handle the modal for deletion
+            // Function to handle the modal for deletion.
             function showConfirmModal(shortName) {
-                itemToDeleteRef = shortName;
+                itemToDeleteKey = shortName;
                 confirmModal.classList.remove('hidden');
             }
 
             modalCancelBtn.addEventListener('click', () => {
                 confirmModal.classList.add('hidden');
-                itemToDeleteRef = null;
+                itemToDeleteKey = null;
             });
 
             confirmDeleteBtn.addEventListener('click', () => {
-                if (itemToDeleteRef) {
-                    deleteItem(itemToDeleteRef);
+                if (itemToDeleteKey) {
+                    deleteItem(itemToDeleteKey);
                 }
                 confirmModal.classList.add('hidden');
             });
 
-            // Event listeners for bulk-edit buttons
+            // Event listeners for bulk-edit buttons.
             editAllBtn.addEventListener('click', () => {
                 isEditingAll = true;
                 editingPeptideKey = null; // Exit single edit mode
-                displayData(currentData);
+                displayData(currentPeptideData);
             });
 
             saveAllBtn.addEventListener('click', () => {
@@ -345,14 +437,14 @@
 
             cancelAllBtn.addEventListener('click', () => {
                 isEditingAll = false;
-                displayData(currentData);
+                displayData(currentPeptideData);
             });
 
-            // Function to generate and append table rows
-            function displayData(data) {
+            // Function to generate and append table rows for the main inventory.
+            function displayData(peptideData) {
                 tableBody.innerHTML = '';
-
-                // Show/hide bulk buttons and new item section based on mode
+                
+                // Show/hide bulk buttons and new item section based on mode.
                 if (isEditingAll) {
                     editAllBtn.classList.add('hidden');
                     saveAllBtn.classList.remove('hidden');
@@ -366,16 +458,20 @@
                 }
 
                 noDataMessage.classList.add('hidden');
-                if (!data) {
+                if (!peptideData || Object.keys(peptideData).length === 0) {
                     noDataMessage.classList.remove('hidden');
+                    profitTableBody.innerHTML = ''; // Clear profit table as well
                     return;
                 }
 
-                currentData = data;
+                currentPeptideData = peptideData;
 
-                Object.keys(data).forEach(peptideKey => {
-                    const item = data[peptideKey];
+                Object.keys(peptideData).forEach(peptideKey => {
+                    const item = peptideData[peptideKey];
                     const isEditing = isEditingAll || editingPeptideKey === peptideKey;
+
+                    // Handle key inconsistency for some items
+                    const sellPrice = item.sellPricePerVial !== undefined ? item.sellPricePerVial : item.price;
 
                     const row = document.createElement('tr');
                     row.dataset.peptideKey = peptideKey;
@@ -384,16 +480,14 @@
                     if (isEditing) {
                         row.innerHTML = `
                             <td class="px-4 py-3 text-sm text-gray-800 font-medium text-center">
-                                <input type="text" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.Name || ''}" data-key="Name">
+                                <input type="text" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.name || ''}" data-key="name">
                             </td>
-                            <td class="px-4 py-3 text-sm text-center"><input type="url" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.COA || ''}" data-key="COA"></td>
-                            <td class="px-4 py-3 text-sm text-center"><input type="url" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.Image || ''}" data-key="Image"></td>
-                            <td class="px-4 py-3 text-sm text-center"><input type="number" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.Inventory || 0}" data-key="Inventory"></td>
-                            <td class="px-4 py-3 text-sm text-center"><input type="text" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${(item.Price || '').toString().replace('$', '')}" data-key="Price"></td>
-                            <td class="px-4 py-3 text-sm text-center"><input type="text" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item['Total vial weight'] || ''}" data-key="Total vial weight"></td>
-                            <td class="px-4 py-3 text-sm text-center">
-                                <input type="checkbox" class="edit-input h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" ${item.Blend ? 'checked' : ''} data-key="Blend">
-                            </td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="url" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.coa || ''}" data-key="coa"></td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="url" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.image || ''}" data-key="image"></td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="number" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.currentInventory || 0}" data-key="currentInventory"></td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="number" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${sellPrice || 0}" data-key="sellPricePerVial"></td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="number" class="edit-input w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" value="${item.totalVialWeight || 0}" data-key="totalVialWeight"></td>
+                            <td class="px-4 py-3 text-sm text-center"><input type="checkbox" class="edit-input h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" ${item.blend ? 'checked' : ''} data-key="blend"></td>
                             <td class="px-4 py-3 text-sm text-center space-x-2">
                                 <button class="save-btn bg-green-600 text-white font-semibold py-1 px-3 rounded-xl hover:bg-green-700 transition-all">Save</button>
                                 <button class="cancel-btn bg-gray-300 text-gray-800 font-semibold py-1 px-3 rounded-xl hover:bg-gray-400 transition-all">Cancel</button>
@@ -401,24 +495,94 @@
                         `;
                     } else {
                         row.innerHTML = `
-                             <td class="px-4 py-3 text-sm text-gray-800 font-medium text-center">${item.Name || ''}</td>
-                             <td class="px-4 py-3 text-sm text-center"><a href="${item.COA}" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:underline">View COA</a></td>
-                             <td class="px-4 py-3 text-sm text-center"><a href="${item.Image}" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:underline">View Image</a></td>
-                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item.Inventory || ''}</td>
-                             <td class="px-4 py-3 text-sm text-gray-800 text-center">$${(item.Price || 0).toFixed(2)}</td>
-                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item['Total vial weight'] || ''}</td>
-                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item.Blend ? 'Yes' : 'No'}</td>
+                             <td class="px-4 py-3 text-sm text-gray-800 font-medium text-center">${item.name || ''}</td>
+                             <td class="px-4 py-3 text-sm text-center"><a href="${item.coa}" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:underline">View COA</a></td>
+                             <td class="px-4 py-3 text-sm text-center"><a href="${item.image}" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:underline">View Image</a></td>
+                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item.currentInventory || ''}</td>
+                             <td class="px-4 py-3 text-sm text-gray-800 text-center">$${(sellPrice || 0).toFixed(2)}</td>
+                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item.totalVialWeight || 0}</td>
+                             <td class="px-4 py-3 text-sm text-gray-800 text-center">${item.blend ? 'Yes' : 'No'}</td>
                              <td class="px-4 py-3 text-sm text-center space-x-2">
                                  <button class="edit-btn text-indigo-600 hover:text-indigo-800 font-semibold">Edit</button>
                                  <button class="delete-btn text-red-600 hover:text-red-800 font-semibold">Delete</button>
                              </td>
-                         `;
+                           `;
                     }
                     tableBody.appendChild(row);
                 });
+
+                // Call the new function to display the profit table.
+                displayProfitTable(peptideData);
             }
 
-            // Listen for clicks on the table body for save, cancel, and delete buttons using event delegation
+            // Function to generate and append table rows for the profit table.
+            function displayProfitTable(peptideData) {
+                profitTableBody.innerHTML = '';
+                if (!peptideData || Object.keys(peptideData).length === 0) {
+                    totalCostDisplay.textContent = "$0.00";
+                    totalRevenueDisplay.textContent = "$0.00";
+                    totalProfitDisplay.textContent = "$0.00";
+                    return;
+                }
+                
+                // Initialize totals for the summary footer
+                let totalInventoryCost = 0;
+                let totalProjectedRevenue = 0;
+                let totalProjectedProfit = 0;
+
+                Object.keys(peptideData).forEach(peptideKey => {
+                    const item = peptideData[peptideKey];
+
+                    // Handle key inconsistency for some items
+                    const sellPrice = item.sellPricePerVial !== undefined ? item.sellPricePerVial : item.price;
+                    
+                    let totalKitsBought = 0;
+                    let totalVialsPurchased = 0;
+                    let totalKitCost = 0;
+
+                    if (item.costHistory && Array.isArray(item.costHistory)) {
+                        item.costHistory.forEach(history => {
+                            const kitsBought = parseInt(history.totalKitsBought, 10) || 0;
+                            const vialsPerKit = parseInt(history.totalVialsPerKit, 10) || 0;
+                            const kitCost = parseFloat(history.costPerKit) || 0;
+
+                            totalKitsBought += kitsBought;
+                            totalVialsPurchased += kitsBought * vialsPerKit;
+                            totalKitCost += kitsBought * kitCost;
+                        });
+                    }
+
+                    const averageCostPerVial = totalVialsPurchased > 0 ? totalKitCost / totalVialsPurchased : 0;
+                    const projectedRevenue = totalVialsPurchased * sellPrice;
+                    const projectedProfit = projectedRevenue - totalKitCost;
+
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'border-gray-200');
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-sm text-gray-800 font-medium text-center">${item.name || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-800 text-center">${totalKitsBought}</td>
+                        <td class="px-4 py-3 text-sm text-center">$${totalKitCost.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-center">$${averageCostPerVial.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-center">$${projectedRevenue.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-center">$${projectedProfit.toFixed(2)}</td>
+                    `;
+
+                    profitTableBody.appendChild(row);
+
+                    // Add to totals for the summary footer
+                    totalInventoryCost += totalKitCost;
+                    totalProjectedRevenue += projectedRevenue;
+                    totalProjectedProfit += projectedProfit;
+                });
+
+                // Update the total displays in the footer
+                totalCostDisplay.textContent = `$${totalInventoryCost.toFixed(2)}`;
+                totalRevenueDisplay.textContent = `$${totalProjectedRevenue.toFixed(2)}`;
+                totalProfitDisplay.textContent = `$${totalProjectedProfit.toFixed(2)}`;
+            }
+
+            // Listen for clicks on the table body for save, cancel, and delete buttons using event delegation.
             tableBody.addEventListener('click', (e) => {
                 const target = e.target;
                 const row = target.closest('tr');
@@ -428,44 +592,47 @@
 
                 if (target.classList.contains('save-btn')) {
                     const inputs = row.querySelectorAll('.edit-input');
-                    const updatedData = {};
+                    const originalItem = currentPeptideData[peptideKey];
+                    const updatedItem = { ...originalItem };
+                    
                     inputs.forEach(input => {
                         const key = input.dataset.key;
                         if (input.type === 'checkbox') {
-                            updatedData[key] = input.checked;
+                            updatedItem[key] = input.checked;
+                        } else if (input.type === 'number') {
+                            updatedItem[key] = parseFloat(input.value) || 0;
                         } else {
-                            let value = input.value.trim();
-                            if (key === 'Inventory') {
-                                value = parseInt(value, 10) || 0;
-                            } else if (key === 'Price') {
-                                value = parseFloat(value.replace('$', '')) || 0;
-                            }
-                            updatedData[key] = value;
+                            updatedItem[key] = input.value.trim();
                         }
                     });
-                    // Now, the updatedData object contains the new 'Name' value.
-                    saveItem(peptideKey, updatedData);
+
+                    // Special case to handle price vs sellPricePerVial
+                    if (updatedItem.sellPricePerVial !== undefined) {
+                        updatedItem.price = updatedItem.sellPricePerVial;
+                    }
+
+                    saveItem(peptideKey, updatedItem);
                 } else if (target.classList.contains('cancel-btn')) {
                     editingPeptideKey = null;
-                    displayData(currentData);
+                    displayData(currentPeptideData);
                 } else if (target.classList.contains('edit-btn')) {
                     editingPeptideKey = peptideKey;
-                    displayData(currentData);
+                    displayData(currentPeptideData);
                 } else if (target.classList.contains('delete-btn')) {
                     showConfirmModal(peptideKey);
                 }
             });
 
-            // Listen for changes in the database and update the table in real-time
+            // Listen for changes in the database and update the tables in real-time.
             loadingMessage.classList.remove('hidden');
             database.ref('Peptides').on('value', (snapshot) => {
+                currentPeptideData = snapshot.val() || {};
                 loadingMessage.classList.add('hidden');
-                const data = snapshot.val();
-                displayData(data);
+                displayData(currentPeptideData);
             }, (error) => {
                 loadingMessage.classList.add('hidden');
-                console.error("Failed to read data:", error.code);
-                showStatus('Error reading data: ' + error.message, false);
+                console.error("Failed to read peptides data:", error.code);
+                showStatus('Error reading peptides data: ' + error.message, false);
             });
 
             // --- Calculator Logic ---
@@ -495,12 +662,12 @@
                 output4x.textContent = `$${suggested4x.toFixed(2)}`;
             }
 
-            // Event listeners for calculator modal
+            // Event listeners for calculator modal.
             openCalcBtn.addEventListener('click', () => {
                 calcModal.classList.remove('hidden');
-                // Set initial values
+                // Set initial values.
                 calcKitCostInput.value = '';
-                calcVialsInKitInput.value = '10'; // Default to 10 vials
+                calcVialsInKitInput.value = '10'; // Default to 10 vials.
                 calcMgPerVialInput.value = '';
                 calculatePrices();
             });
@@ -509,10 +676,13 @@
                 calcModal.classList.add('hidden');
             });
 
-            // Listen for input changes to recalculate
+            // Listen for input changes to recalculate.
             calcKitCostInput.addEventListener('input', calculatePrices);
             calcVialsInKitInput.addEventListener('input', calculatePrices);
             calcMgPerVialInput.addEventListener('input', calculatePrices);
+
+            // Set default value for the new purchase date input
+            newPurchaseDateInput.value = new Date().toISOString().slice(0, 10);
         })();
     </script>
 </body>
